@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>6.4</version>
+    <template_groups>
+        <template_group>
+            <uuid>7df96b18c230490a9a0a9e2307226338</uuid>
+            <name>Templates</name>
+        </template_group>
+    </template_groups>
+    <templates>
+        <template>
+            <uuid>7e80ffd3d759445ab75882e9b9c8d187</uuid>
+            <template>Expiration check</template>
+            <name>Expiration check</name>
+            <description>Using this template, you can define a macro with a name and date. Upon discovery, items will be created, and expiration dates will be evaluated, triggering actions accordingly.
+
+Add macro {$EXPIRATION.CHECKS} to the hosts with all items you want to check for example:
+Some API Key:2024-04-14,Some Other API Key:2024-05-12,Some License:2024-03-10</description>
+            <vendor>
+                <name>Zablove</name>
+                <version>1.0-0</version>
+            </vendor>
+            <groups>
+                <group>
+                    <name>Templates</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <uuid>3fd919a8153549a298c2dd5ff93e8b1e</uuid>
+                    <name>RAW Expiration Checks</name>
+                    <type>SCRIPT</type>
+                    <key>raw.expiration</key>
+                    <delay>8h</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>// Script to parse semicolon and comma separated lines into JSON
+
+params = JSON.parse(value),
+
+field = params.Macro.split(&quot;,&quot;);
+out_string = '';
+for (x in field) {
+  item = field[x].split(&quot;:&quot;);
+  out_string += '{&quot;ITEMNAME&quot;:&quot;'+ item[0]+ '&quot;,&quot;DATE&quot;:&quot;'+ item[1]+ '&quot;';
+//  if (item[1]) { out_string += ',&quot;PORT&quot;:&quot;'+ item[1] + '&quot;' ;} else { out_string += ',&quot;PORT&quot;:&quot;&quot;' ;}
+//  if (item[2]) { out_string += ',&quot;IP&quot;:&quot;'+ item[2] + '&quot;' ; } else { out_string += ',&quot;IP&quot;:&quot;&quot;' ; }
+   out_string+= '},';
+ }
+out_string = out_string.substring(0, out_string.length - 1);
+
+return '[' + out_string + ']';</params>
+                    <parameters>
+                        <parameter>
+                            <name>Macro</name>
+                            <value>{$EXPIRATION.CHECKS}</value>
+                        </parameter>
+                    </parameters>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <uuid>63827568008044c38f195587fb57ba40</uuid>
+                    <name>Discover Expiration Items</name>
+                    <type>DEPENDENT</type>
+                    <key>exp.discovery</key>
+                    <delay>0</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <uuid>82d654c6569241a696d4e02d05a7ac4e</uuid>
+                            <name>{#ITEMNAME} expires in</name>
+                            <type>SCRIPT</type>
+                            <key>expires.[{#ITEMNAME}]</key>
+                            <delay>8h</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>Days</units>
+                            <params>params = JSON.parse(value);
+
+function dagenTotDatum(targetDatum) {
+    // Vandaag's datum
+    var vandaag = new Date();
+
+    // Doel datum
+    var doelDatum = new Date(targetDatum);
+
+    // Bereken het verschil in milliseconden tussen de doel datum en vandaag's datum
+    var verschilInTijd = doelDatum.getTime() - vandaag.getTime();
+
+    // Converteer milliseconden naar dagen en rond af naar beneden
+    var dagen = Math.floor(verschilInTijd / (1000 * 3600 * 24));
+
+    return dagen;
+}
+
+return dagenTotDatum(params.expire);</params>
+                            <parameters>
+                                <parameter>
+                                    <name>expire</name>
+                                    <value>{#DATE}</value>
+                                </parameter>
+                            </parameters>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <uuid>e97d4fd9eab24ff49fbf374bf9f774bb</uuid>
+                                    <expression>last(/Expiration check/expires.[{#ITEMNAME}])&lt;={$EXPIRE.DISASTER}</expression>
+                                    <name>{#ITEMNAME} is expired at {#DATE}</name>
+                                    <priority>DISASTER</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <uuid>96abec8abb7947a0ad40f559cdb66f94</uuid>
+                                    <expression>last(/Expiration check/expires.[{#ITEMNAME}])&lt;={$EXPIRE.AVERAGE}</expression>
+                                    <name>{#ITEMNAME} will expire in less then {$EXPIRE.AVERAGE} days. Expire date: {#DATE}</name>
+                                    <priority>AVERAGE</priority>
+                                    <manual_close>YES</manual_close>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>{#ITEMNAME} will expire in less then {$EXPIRE.HIGH} days. Expire date: {#DATE}</name>
+                                            <expression>last(/Expiration check/expires.[{#ITEMNAME}])&lt;={$EXPIRE.HIGH}</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <uuid>46ebd50fdde1480589d5c52fbd87fdbb</uuid>
+                                    <expression>last(/Expiration check/expires.[{#ITEMNAME}])&lt;={$EXPIRE.HIGH}</expression>
+                                    <name>{#ITEMNAME} will expire in less then {$EXPIRE.HIGH} days. Expire date: {#DATE}</name>
+                                    <priority>HIGH</priority>
+                                    <manual_close>YES</manual_close>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>{#ITEMNAME} is expired at {#DATE}</name>
+                                            <expression>last(/Expiration check/expires.[{#ITEMNAME}])&lt;={$EXPIRE.DISASTER}</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <uuid>8fc7147c7861458d8d5f66b45ab3313f</uuid>
+                                    <expression>last(/Expiration check/expires.[{#ITEMNAME}])&lt;={$EXPIRE.INFO}</expression>
+                                    <name>{#ITEMNAME} will expire in less then {$EXPIRE.INFO} days. Expire date: {#DATE}</name>
+                                    <priority>INFO</priority>
+                                    <manual_close>YES</manual_close>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>{#ITEMNAME} will expire in less then {$EXPIRE.WARN} days. Expire date: {#DATE}</name>
+                                            <expression>last(/Expiration check/expires.[{#ITEMNAME}])&lt;={$EXPIRE.WARN}</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <uuid>e46d4770e284406883e36d6a1e07c71b</uuid>
+                                    <expression>last(/Expiration check/expires.[{#ITEMNAME}])&lt;={$EXPIRE.WARN}</expression>
+                                    <name>{#ITEMNAME} will expire in less then {$EXPIRE.WARN} days. Expire date: {#DATE}</name>
+                                    <priority>WARNING</priority>
+                                    <manual_close>YES</manual_close>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>{#ITEMNAME} will expire in less then {$EXPIRE.AVERAGE} days. Expire date: {#DATE}</name>
+                                            <expression>last(/Expiration check/expires.[{#ITEMNAME}])&lt;={$EXPIRE.AVERAGE}</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>raw.expiration</key>
+                    </master_item>
+                    <lld_macro_paths>
+                        <lld_macro_path>
+                            <lld_macro>{#DATE}</lld_macro>
+                            <path>$.DATE</path>
+                        </lld_macro_path>
+                        <lld_macro_path>
+                            <lld_macro>{#ITEMNAME}</lld_macro>
+                            <path>$.ITEMNAME</path>
+                        </lld_macro_path>
+                    </lld_macro_paths>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$EXPIRATION.CHECKS}</macro>
+                    <value>&lt;name of item1&gt;:&lt;date&gt;,&lt;name of item2&gt;:&lt;date&gt;</value>
+                    <description>Date format always as 2024-03-25 (YYYY-MM-DD)</description>
+                </macro>
+                <macro>
+                    <macro>{$EXPIRE.AVERAGE}</macro>
+                    <value>10</value>
+                </macro>
+                <macro>
+                    <macro>{$EXPIRE.DISASTER}</macro>
+                    <value>0</value>
+                </macro>
+                <macro>
+                    <macro>{$EXPIRE.HIGH}</macro>
+                    <value>5</value>
+                </macro>
+                <macro>
+                    <macro>{$EXPIRE.INFO}</macro>
+                    <value>60</value>
+                </macro>
+                <macro>
+                    <macro>{$EXPIRE.WARN}</macro>
+                    <value>30</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
