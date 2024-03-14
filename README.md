@@ -21,4 +21,4 @@ All items will be discovered and will alert. Macro's used for alerting:
 | {$EXPIRE.INFO} | 60 |
 
 Example of the problems displaying in Zabbix:
-![Screenshot](https://raw.githubusercontent.com/Zablove/zabbix_expiration_template/screenshot/main/screenshot1.png)
+![Screenshot](https://raw.githubusercontent.com/Zablove/zabbix_expiration_template/main/screenshot/screenshot1.png)
