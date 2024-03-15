@@ -43,9 +43,7 @@ out_string = '';
 for (x in field) {
   item = field[x].split(&quot;:&quot;);
   out_string += '{&quot;ITEMNAME&quot;:&quot;'+ item[0]+ '&quot;,&quot;DATE&quot;:&quot;'+ item[1]+ '&quot;';
-//  if (item[1]) { out_string += ',&quot;PORT&quot;:&quot;'+ item[1] + '&quot;' ;} else { out_string += ',&quot;PORT&quot;:&quot;&quot;' ;}
-//  if (item[2]) { out_string += ',&quot;IP&quot;:&quot;'+ item[2] + '&quot;' ; } else { out_string += ',&quot;IP&quot;:&quot;&quot;' ; }
-   out_string+= '},';
+  out_string+= '},';
  }
 out_string = out_string.substring(0, out_string.length - 1);
 
